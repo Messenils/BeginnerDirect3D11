@@ -12,7 +12,19 @@
 #pragma comment(lib, "Xinput.lib")
 #include "3DMaths.h"
 
+#include <string>
+
 static bool global_windowDidResize = false;
+
+std::string GetExecutableFolder() {
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+    std::string exePath(path);
+    // Remove the executable name to get the folder
+    size_t lastSlash = exePath.find_last_of("\\/");
+    
+    return exePath.substr(0, lastSlash + 1);
+}
 
 // Input
 enum GameAction {
@@ -69,9 +81,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return result;
 }
 
-int Horizontalcontrollerid = 3;
-int Verticalcontrollerid = 4;
-
+int XID0;
+int XID1;
 void PollXinput( int XID)
 {
     XINPUT_STATE state;
@@ -83,22 +94,25 @@ void PollXinput( int XID)
     {
         WORD buttons = state.Gamepad.wButtons;
 
-        if (XID == Horizontalcontrollerid)
+        if (XID == XID0)
         { 
             global_keyIsDown[GameActionMoveLeft] = buttons & XINPUT_GAMEPAD_A;
             global_keyIsDown[GameActionMoveRight] = buttons & XINPUT_GAMEPAD_B;
         }
-        if (XID == Verticalcontrollerid)
+        if (XID == XID1)
         {
-            global_keyIsDown[GameActionMoveDown] = buttons & XINPUT_GAMEPAD_A;
+            global_keyIsDown[GameActionMoveDown] = buttons & XINPUT_GAMEPAD_X;
 
-            global_keyIsDown[GameActionMoveUp] = buttons & XINPUT_GAMEPAD_A;
+            global_keyIsDown[GameActionMoveUp] = buttons & XINPUT_GAMEPAD_Y;
         }
     }
 }
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
 {
     // Open a window
+    std::string iniPath = GetExecutableFolder() + "settings.ini";
+    XID0 = GetPrivateProfileIntA("Settings", "XID0", 0, iniPath.c_str());
+    XID1 = GetPrivateProfileIntA("Settings", "XID1", 1, iniPath.c_str());
     HWND hwnd;
     {
         WNDCLASSEXW winClass = {};
@@ -372,8 +386,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     bool isRunning = true;
     while(isRunning)
     {
-        PollXinput(Verticalcontrollerid);
-        PollXinput(Horizontalcontrollerid);
+        PollXinput(XID0);
+        PollXinput(XID1);
         float dt;
         {
             double previousTimeInSeconds = currentTimeInSeconds;

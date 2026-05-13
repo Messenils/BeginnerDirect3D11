@@ -8,7 +8,8 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 #include <assert.h>
-
+#include <Xinput.h>
+#pragma comment(lib, "Xinput.lib")
 #include "3DMaths.h"
 
 static bool global_windowDidResize = false;
@@ -68,6 +69,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     return result;
 }
 
+int Horizontalcontrollerid = 3;
+int Verticalcontrollerid = 4;
+
+void PollXinput( int XID)
+{
+    XINPUT_STATE state;
+    ZeroMemory(&state, sizeof(XINPUT_STATE));
+
+    DWORD dwResult = XInputGetState(XID, &state);
+
+    if (dwResult == ERROR_SUCCESS)
+    {
+        WORD buttons = state.Gamepad.wButtons;
+
+        if (XID == Horizontalcontrollerid)
+        { 
+            global_keyIsDown[GameActionMoveLeft] = buttons & XINPUT_GAMEPAD_A;
+            global_keyIsDown[GameActionMoveRight] = buttons & XINPUT_GAMEPAD_B;
+        }
+        if (XID == Verticalcontrollerid)
+        {
+            global_keyIsDown[GameActionMoveDown] = buttons & XINPUT_GAMEPAD_A;
+
+            global_keyIsDown[GameActionMoveUp] = buttons & XINPUT_GAMEPAD_A;
+        }
+    }
+}
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
 {
     // Open a window
@@ -344,6 +372,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
     bool isRunning = true;
     while(isRunning)
     {
+        PollXinput(Verticalcontrollerid);
+        PollXinput(Horizontalcontrollerid);
         float dt;
         {
             double previousTimeInSeconds = currentTimeInSeconds;
